@@ -1,12 +1,11 @@
 package Cliente;
 
+import Servidor.ServerThread;
 import utils.InputValidation;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Player {
@@ -30,22 +29,61 @@ public class Player {
 
                 ){
 
-            System.out.println("Iniciando servidor...");
-            System.out.println(in.readLine());
-            String username = sc.nextLine();
-            out.println(username);
+            boolean logado = false;
+            int Numtentativas = 0;
 
-            System.out.println(in.readLine());
-            String password = sc.nextLine();
-            out.println(password);
+            do{
+                System.out.println("Username: ");
+                String username = sc.nextLine();
+                out.println(username);
 
-            String resposta = in.readLine();
-            System.out.println(resposta);
+                System.out.println("Password: ");
+                String password = sc.nextLine();
+                out.println(password);
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+                String resposta = in.readLine();
+                if(resposta == null){
+                    System.out.println("Server desconnect");
+                    break;
+                }
+
+                System.out.println(resposta);
+
+                if(resposta.toLowerCase().contains("logado")) {
+                    logado = true;
+
+                }else if(resposta.toLowerCase().contains("incorreta")) {
+                    Numtentativas++;
+                }
+
+            }while(!logado && Numtentativas < 3);
+
+            int numeroCerto;
+            if(logado){
+                String mensagem = in.readLine();
+                System.out.println(mensagem);
+
+                System.out.println("Guess a number: ");
+                int guessNumber = sc.nextInt();
+
+                numeroCerto = Integer.parseInt(in.readLine());
+
+                if(guessNumber == numeroCerto){
+                    System.out.println("Congratulations!");
+                }
+
+            }
+
+
+        } catch (UnknownHostException e) {
+            System.err.println("Host unknown: " + hostname);
+            System.exit(2);
+        }catch (IOException e){
+            System.err.println("Erro de IO: " + e.getMessage());
+            System.exit(3);
+        }finally {
+            sc.close();
         }
 
-        sc.close();
     }
 }

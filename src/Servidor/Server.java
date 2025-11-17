@@ -1,5 +1,6 @@
 package Servidor;
 
+import utils.Array;
 import utils.InputValidation;
 
 import java.io.*;
@@ -9,6 +10,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
@@ -131,11 +133,34 @@ public class Server {
 
         int numberPort;
         int numberPlayers = 0;
+        int minNumber, maxNumber;
+        int randomNumber;
 
         numberPort = InputValidation.validateIntBetween(sc, "Introduza o numero do porto que o servidor vai escutar " +
                 "entre (1024 e 65535): ", 1024, 65535);
 
+
+        //int[] number = Array.newRandomArray(sc);
+
+        do{
+            minNumber = InputValidation.validateInt(sc, "Insert the min number: ");
+            maxNumber = InputValidation.validateInt(sc, "Insert the max number: ");
+
+            if(minNumber > maxNumber) {
+                System.out.println("Max must be greater than min");
+            }
+
+        }while(minNumber > maxNumber);
+
+        Random rand = new Random();
+
+        randomNumber = rand.nextInt(minNumber, maxNumber + 1);
+
+        System.out.println("Teste number: " + randomNumber);
+
         sc.close();
+
+        updateLoginStatusEndGame();
 
         try (
                 //Cria um servidor e recebe uma porta para escutar as conexões.
@@ -162,7 +187,7 @@ public class Server {
 
                     //Exectutar uma nova tarefa em uma thread disponivel.
                     //O phaser coordena ou sincroniza as threads e o semaforo limita o acesso.
-                    executor.execute(new ServerThread(jogadorSocket, phaser, semaphore));
+                    executor.execute(new ServerThread(jogadorSocket, phaser, semaphore, minNumber, maxNumber, randomNumber));
 
                 } catch (SocketTimeoutException e) {
                     System.err.println("Erro: Tempo limite para aceitar novos jogadores atingido");
@@ -183,8 +208,6 @@ public class Server {
             if(!executor.awaitTermination(Max_Time_Game, TimeUnit.SECONDS)) {
                 Game_End = true;
                 System.out.println("O tempo de jogo terminou!");
-
-                updateLoginStatusEndGame();
 
             }
 

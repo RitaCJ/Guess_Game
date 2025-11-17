@@ -82,7 +82,7 @@ public class Array {
 
         //Preencher o array com valores aleatorios
         for(int i = 0; i < num; i++) {
-            randomArray[i] = rand.nextInt(numMax, numMin + 1);
+            randomArray[i] = rand.nextInt(numMin, numMax + 1);
         }
 
         return randomArray;

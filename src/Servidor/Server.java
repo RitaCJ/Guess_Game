@@ -16,14 +16,15 @@ import java.util.concurrent.*;
 
 public class Server {
 
-    private final static int numThreads = 12;
+    private final static int numThreads = 5;
     private final static int socket_timeout_limit = 40000;
     private final static Phaser phaser = new Phaser();
     private final static Semaphore semaphore = new Semaphore(0);
     private final static int Max_Time_Game = 40;
-    private static volatile boolean Game_End = false;
+    public static volatile boolean Game_End = false;
+    public static volatile boolean Time_End = false;
 
-    //Caminho absoluto para o ficheiro csv
+    //Absolute path to the CSV file
     private final static String userFilePath = System.getProperty("user.dir") + "\\src\\Servidor\\utilizadores.csv";
 
     public static boolean authenticateUsers(String username, String password) {
@@ -31,20 +32,20 @@ public class Server {
         try( BufferedReader br = new BufferedReader(new FileReader(userFilePath, StandardCharsets.ISO_8859_1))) {
 
             String line;
-            //Executa até chegar ao final do arquivo
+            //Execute until the end of the file is reached.
             while((line = br.readLine()) != null ) {
                  String[] tokens = line.split(";");
 
                  if(tokens[0].equals(username) && tokens[1].equals(password)) {
                      // updateLoginStatus(username, 1);
-                     //Utilizador encontrado
+                     //User found.
                      return true;
 
                  }
             }
 
         } catch (Exception e) {
-            System.err.println("Erro ao carregar arquivo: " + userFilePath);
+            System.err.println("Error loading file: " + userFilePath);
             return false;
         }
 
@@ -67,7 +68,7 @@ public class Server {
                        linha = String.join(";", tokens);
 
                    }else{
-                       System.out.println("Usuario já esta logado");
+                       System.out.println("The user is already logged in.");
                        return 0;
                    }
                }
@@ -88,7 +89,7 @@ public class Server {
                bw.newLine();
            }
        }catch (Exception e) {
-           System.out.println("Erro ao escrever no arquivo: " + userFilePath);
+           System.out.println("Error loading file: " + userFilePath);
        }
        return 1;
     }
@@ -109,10 +110,10 @@ public class Server {
             }
 
         } catch (Exception e) {
-            System.out.println("Erro ao ler o arquivo: " + userFilePath);
+            System.out.println("Error loading file: " + userFilePath);
         }
 
-        //Escrever no arquivo
+        //Write to file.
 
         try( BufferedWriter bw = new BufferedWriter(new FileWriter(userFilePath))){
 
@@ -121,7 +122,7 @@ public class Server {
                 bw.newLine();
             }
         }catch (Exception e) {
-            System.out.println("Erro ao escrever no arquivo: " + userFilePath);
+            System.out.println("Error loading file: " + userFilePath);
         }
 
     }
@@ -136,11 +137,8 @@ public class Server {
         int minNumber, maxNumber;
         int randomNumber;
 
-        numberPort = InputValidation.validateIntBetween(sc, "Introduza o numero do porto que o servidor vai escutar " +
-                "entre (1024 e 65535): ", 1024, 65535);
-
-
-        //int[] number = Array.newRandomArray(sc);
+        numberPort = InputValidation.validateIntBetween(sc, "Enter the port number that the server will listen on " +
+                "between(1024 and 65535): ", 1024, 65535);
 
         do{
             minNumber = InputValidation.validateInt(sc, "Insert the min number: ");
@@ -156,48 +154,45 @@ public class Server {
 
         randomNumber = rand.nextInt(minNumber, maxNumber + 1);
 
-        System.out.println("Teste number: " + randomNumber);
+        System.out.println("The random number: " + randomNumber);
 
         sc.close();
 
         updateLoginStatusEndGame();
 
         try (
-                //Cria um servidor e recebe uma porta para escutar as conexões.
+                //Create a server and receive a port to listen for connections.
                 ServerSocket serverSocket = new ServerSocket(numberPort);
 
-                //Cria uma pool (conjunto de threads). Recebe um número de threads predefinido
+                //Creates a thread pool (set of threads). Receives a predefined number of threads.
                 ExecutorService executor = Executors.newFixedThreadPool(numThreads);
         ) {
 
-            //Tempo limite para aceitar novos jogadores(conexões).
+            //Time limit for accepting new players (connections).
             serverSocket.setSoTimeout(socket_timeout_limit);
 
             while (true) {
 
-                System.out.println("Aguardando jogador...");
+                System.out.println("Waiting for player...");
 
                 try{
 
-                    //Espera no máximo o tempo de (socket_timeout_limit) por um novo jogador (conexão).
+                    //Wait a maximum of (socket_timeout_limit) for a new player (connection).
                     Socket jogadorSocket = serverSocket.accept();
                     numberPlayers++;
 
-                    System.out.println("Jogador " + numberPlayers + " conectado!");
+                    System.out.println("Player " + numberPlayers + " connected!");
 
-                    //Exectutar uma nova tarefa em uma thread disponivel.
-                    //O phaser coordena ou sincroniza as threads e o semaforo limita o acesso.
+                    //Execute a new task in an available thread.
+                    //The phaser coordinates or synchronizes the threads, and the semaphore limits access.
                     executor.execute(new ServerThread(jogadorSocket, phaser, semaphore, minNumber, maxNumber, randomNumber));
 
                 } catch (SocketTimeoutException e) {
-                    System.err.println("Erro: Tempo limite para aceitar novos jogadores atingido");
+                    System.err.println("Error: Time limit for accepting new players reached.");
+                    Time_End = true;
 
-                    //Libera todas as threads bloqueadas.
-                    semaphore.release(numberPlayers);
-                    //Fecha a thread pool do executorService
+                    //Closes the executorService thread pool.
                     executor.shutdownNow();
-
-                    //updateLoginStatusEndGame();
 
                     break;
                 }
@@ -207,8 +202,7 @@ public class Server {
             //Tempo máximo do jogo
             if(!executor.awaitTermination(Max_Time_Game, TimeUnit.SECONDS)) {
                 Game_End = true;
-                System.out.println("O tempo de jogo terminou!");
-
+                System.err.println("O tempo de jogo terminou!");
             }
 
         } catch (IOException e) {

@@ -52,26 +52,43 @@ public class Player {
                 if(resposta.toLowerCase().contains("logado")) {
                     logado = true;
 
+                }else if(resposta.toLowerCase().contains("iniciada")){
+                    break;
+
                 }else if(resposta.toLowerCase().contains("incorreta")) {
                     Numtentativas++;
                 }
 
             }while(!logado && Numtentativas < 3);
 
-            int numeroCerto;
             if(logado){
                 String mensagem = in.readLine();
                 System.out.println(mensagem);
 
-                System.out.println("Guess a number: ");
-                int guessNumber = sc.nextInt();
+                while(true){
 
-                numeroCerto = Integer.parseInt(in.readLine());
+                    String text1 = in.readLine();
+                    System.out.println(text1);
 
-                if(guessNumber == numeroCerto){
-                    System.out.println("Congratulations!");
+                    int guessNumber = InputValidation.validateInt(sc, "Guess a number:");
+                    out.println(guessNumber);
+
+                    String answer = in.readLine();
+                    System.out.println(answer);
+
+                    String resposta2;
+                    do{
+                        System.out.println("Quer continuar? (S/Quit)");
+                        resposta2 = sc.nextLine();
+                    }while(!resposta2.equals("S") && !resposta2.equals("Quit"));
+
+                    out.println(resposta2);
+
+                    if(resposta2.equals("Quit")){
+                        System.out.println("Thanks for playing!");
+                        break;
+                    }
                 }
-
             }
 
 

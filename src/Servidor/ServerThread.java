@@ -7,7 +7,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Scanner;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.Semaphore;
@@ -61,8 +63,7 @@ public class ServerThread extends Thread {
 
                     }else if(login == 0) {
                         out.println("Sessao ja iniciada em outro computador!");
-                        //break;
-                         numTentativas++;
+                        break;
                     }
                 }else{
                     System.out.println("User " + username + " não encontrado!");
@@ -71,10 +72,61 @@ public class ServerThread extends Thread {
                 }
             }
 
-            if(logado) {
-                out.println("O numero está entre " + numMin + " e " + numMax);
-            }
+            if(logado){
 
+                //Espera as outras chegarem, para passar para a próxima fase
+                phaser.arriveAndAwaitAdvance();
+
+
+                System.out.println("Jogador vai ser informado que o jogo vai começar!");
+                out.println("O jogo vai começar");
+
+                while(!Server.Game_End){
+
+                    out.println("O numero está entre " + numMin + " e " + numMax);
+
+                    int numeroGuess;
+
+                    try{
+                        numeroGuess = Integer.parseInt(in.readLine());
+                        System.out.println("O jogador escolheu o numero " + numeroGuess);
+                    }catch(NumberFormatException e){
+                        System.err.println("Erro (ServerThread): Numero invalido");
+                        out.println("Numero invalido");
+                        continue;
+                    }
+
+
+                    if(numeroGuess == randomNumber) {
+                        System.out.println("Jogador acertou!");
+                        out.println("You got it right!");
+                        Server.Game_End = true;
+                        return;
+
+                    }else if(numeroGuess > randomNumber){
+                        System.out.println("Jogador digitou um numero mais alto que " + randomNumber);
+                        out.println("Too High!");
+                    }else if(numeroGuess < randomNumber){
+                        System.out.println("Jogador digitou um numero menor que " + randomNumber);
+                        out.println("Too Low!");
+                    }
+
+                    String text = in.readLine();
+                    if(text.equals("Quit")){
+                        System.out.println("Jogador desistiu");
+                        break;
+                    }else{
+                        System.out.println("Vai continuar");
+                    }
+
+                    if(Server.Game_End){
+                        System.out.println("O tempo de jogo terminou");
+                        out.println("Jogador tempo de jogo terminou");
+                        out.println("Quit");
+                    }
+
+                }
+            }
 
 
         } catch (IOException e) {

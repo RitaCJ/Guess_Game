@@ -23,6 +23,8 @@ public class Server {
     private final static int Max_Time_Game = 40;
     public static volatile boolean Game_End = false;
     public static volatile boolean Time_End = false;
+    public static volatile boolean winner = false;
+    public static volatile String userWinner = null;
 
     //Absolute path to the CSV file
     private final static String userFilePath = System.getProperty("user.dir") + "\\src\\Servidor\\utilizadores.csv";
@@ -191,9 +193,11 @@ public class Server {
                     System.err.println("Error: Time limit for accepting new players reached.");
                     Time_End = true;
 
+                    semaphore.release(numberPlayers);
                     //Closes the executorService thread pool.
-                    executor.shutdownNow();
 
+                    serverSocket.close();
+                    executor.shutdownNow();
                     break;
                 }
 

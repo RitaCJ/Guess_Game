@@ -57,37 +57,45 @@ public class Player {
 
                 }else if(resposta.toLowerCase().contains("incorreta")) {
                     Numtentativas++;
+                    if(Numtentativas < 3){
+                        System.out.println("You have " + (3 - Numtentativas)  + " more attempts");
+                    }
+
                 }
 
             }while(!logado && Numtentativas < 3);
 
             if(logado){
+                int numeroCerto = Integer.parseInt(in.readLine());
                 String mensagem = in.readLine();
                 System.out.println(mensagem);
 
                 while(true){
 
                     String text1 = in.readLine();
+                    if(text1 == null){
+                        break;
+                    }
                     System.out.println(text1);
 
-                    int guessNumber = InputValidation.validateInt(sc, "Guess a number:");
+                    if(text1.toLowerCase().contains("terminou") ||
+                        text1.toLowerCase().contains("acertou")){
+                        break;
+                    }
+
+                    //O guess a number pode receber um desisto.
+                    System.out.println("Guess a number (or 'Quit')");
+                    String guessNumber = sc.nextLine();
                     out.println(guessNumber);
+
+                    if(guessNumber.equals("Quit")){
+                        System.out.println("Thanks for playing!");
+                        break;
+                    }
 
                     String answer = in.readLine();
                     System.out.println(answer);
 
-                    String resposta2;
-                    do{
-                        System.out.println("Quer continuar? (S/Quit)");
-                        resposta2 = sc.nextLine();
-                    }while(!resposta2.equals("S") && !resposta2.equals("Quit"));
-
-                    out.println(resposta2);
-
-                    if(resposta2.equals("Quit")){
-                        System.out.println("Thanks for playing!");
-                        break;
-                    }
                 }
             }
 

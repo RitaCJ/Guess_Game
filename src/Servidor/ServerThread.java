@@ -48,9 +48,11 @@ public class ServerThread extends Thread {
             boolean logado = false;
             int numTentativas = 0;
 
+            String username = null;
+
             while(!logado && numTentativas < 3){
 
-                String username = in.readLine();
+                username = in.readLine();
                 String password = in.readLine();
 
                 if(Server.authenticateUsers(username, password)) {
@@ -74,21 +76,38 @@ public class ServerThread extends Thread {
 
             if(logado){
 
-                //Espera as outras chegarem, para passar para a próxima fase
-                phaser.arriveAndAwaitAdvance();
 
+               //Quando o tempo de aceitar novos jogadores terminar
+                try{
+                    semaphore.acquire();
+                }catch (InterruptedException e){
 
+                }
+
+                out.println(randomNumber);
                 System.out.println("Jogador vai ser informado que o jogo vai começar!");
-                out.println("O jogo vai começar");
+                out.println("Terminou o tempo de aceitar novos jogador. O jogo vai começar");
+                int win = 0;
 
                 while(!Server.Game_End){
+
+                    if(Server.winner){
+                        out.println("Jogador " + Server.userWinner + " acertou! O jogo terminou! Numero certo: " + randomNumber);
+                        break;
+                    }
 
                     out.println("O numero está entre " + numMin + " e " + numMax);
 
                     int numeroGuess;
+                    String msg = in.readLine();
+
+                    if(msg.equals("Quit")){
+                        System.out.println("Jogador " + username +" desistiu!");
+                        break;
+                    }
 
                     try{
-                        numeroGuess = Integer.parseInt(in.readLine());
+                        numeroGuess = Integer.parseInt(msg);
                         System.out.println("O jogador escolheu o numero " + numeroGuess);
                     }catch(NumberFormatException e){
                         System.err.println("Erro (ServerThread): Numero invalido");
@@ -98,10 +117,15 @@ public class ServerThread extends Thread {
 
 
                     if(numeroGuess == randomNumber) {
-                        System.out.println("Jogador acertou!");
+                        Server.userWinner = username;
+                        System.out.println("Jogador " + Server.userWinner + " acertou!");
+                        win = 1;
                         out.println("You got it right!");
-                        Server.Game_End = true;
-                        return;
+
+                         Server.winner = true;
+
+
+                         break;
 
                     }else if(numeroGuess > randomNumber){
                         System.out.println("Jogador digitou um numero mais alto que " + randomNumber);
@@ -111,18 +135,12 @@ public class ServerThread extends Thread {
                         out.println("Too Low!");
                     }
 
-                    String text = in.readLine();
-                    if(text.equals("Quit")){
-                        System.out.println("Jogador desistiu");
-                        break;
-                    }else{
-                        System.out.println("Vai continuar");
-                    }
-
+                    //Colocar um if else, e colocar uma flag para verificar se já alguém ganhou.
                     if(Server.Game_End){
                         System.out.println("O tempo de jogo terminou");
                         out.println("Jogador tempo de jogo terminou");
-                        out.println("Quit");
+                       // out.println("Exit");
+                        break;
                     }
 
                 }

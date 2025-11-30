@@ -20,7 +20,7 @@ public class Server {
     private final static int socket_timeout_limit = 40000;
     private final static Phaser phaser = new Phaser();
     private final static Semaphore semaphore = new Semaphore(0);
-    private final static int Max_Time_Game = 40;
+    private final static int Max_Time_Game = 60;
     public static volatile boolean Game_End = false;
     public static volatile boolean Time_End = false;
     public static volatile boolean winner = false;
@@ -39,10 +39,8 @@ public class Server {
                  String[] tokens = line.split(";");
 
                  if(tokens[0].equals(username) && tokens[1].equals(password)) {
-                     // updateLoginStatus(username, 1);
                      //User found.
                      return true;
-
                  }
             }
 
@@ -79,10 +77,10 @@ public class Server {
            }
 
        } catch (Exception e) {
-           System.out.println("Erro ao ler o arquivo: " + userFilePath);
+           System.out.println("Error reading file: " + userFilePath);
        }
 
-        //Escrever no arquivo
+        //write to file
 
        try( BufferedWriter bw = new BufferedWriter(new FileWriter(userFilePath))){
 
@@ -147,7 +145,7 @@ public class Server {
             maxNumber = InputValidation.validateInt(sc, "Insert the max number: ");
 
             if(minNumber > maxNumber) {
-                System.out.println("Max must be greater than min");
+                System.out.println("Max must be greater than min.");
             }
 
         }while(minNumber > maxNumber);
@@ -194,33 +192,32 @@ public class Server {
                     Time_End = true;
 
                     semaphore.release(numberPlayers);
-                    //Closes the executorService thread pool.
-
                     serverSocket.close();
+                    //Closes the executorService thread pool.
                     executor.shutdownNow();
                     break;
                 }
 
             }
 
-            //Tempo máximo do jogo
+            //Maximum game time.
             if(!executor.awaitTermination(Max_Time_Game, TimeUnit.SECONDS)) {
                 Game_End = true;
-                System.err.println("O tempo de jogo terminou!");
+                System.err.println("Game time is over!");
             }
 
         } catch (IOException e) {
 
-            System.err.println("Erro no Servidor(Main): Ocorreu um erro de I/O ao tentar criar o socket " +
-                    "no porto " + numberPort);
+            System.err.println("Server Error (Main): An I/O error occurred while attempting to create the socket " +
+                    "in the port " + numberPort);
 
-            //Termina. Erro de I/O
+            //Terminates. I/O Error.
             System.exit(2);
 
         } catch (InterruptedException e) {
-            System.err.println("Erro no servidor (Main): Ocorreu um erro em awaitTermination");
+            System.err.println("Server error (Main): An error occurred in awaitTermination");
 
-            //Termina.
+            //Ends.
             System.exit(3);
         }
     }
